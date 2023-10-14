@@ -1,6 +1,7 @@
 from connect_db import connect_to_db
 from getpass import getpass
 import sql_queries as sql_queries
+import re
 
 # checks if user has a password vault
 def account_exists():
@@ -13,5 +14,15 @@ def account_exists():
 
 # creates a new vault account
 def create_account():
-    email = input("Register an email: ")
-    master_pwd = getpass("Enter master password: ").encode()
+    print("It seems you don't have an account. Let's begin the registration process :)")
+    print("---------------------------------------------------------------------------")
+    
+    print("Register an email: ")
+    email = input()
+    # check email is correct format
+    print("Create a master password; must include at least one capital letter, one number and one special character: ")
+    master_pwd = getpass()
+
+    # check if the password meets password criteria
+    print(master_pwd)
+

@@ -16,13 +16,13 @@ def main():
         description="Local Password Manager Vault", usage="[options]"
     )
 
-    master_pwd_plain = getpass.getpass("Enter master password: ").encode()
+    # TODO: encrypt and hash master password 
+    master_pwd_plain = getpass("Enter master password: ").encode()
     hashed = master_pwd.get_hashed_masterpwd(master_pwd_plain)
-
 
     test = getpass.getpass("Enter master password again: ").encode()
     print(master_pwd.checkpw(test, hashed))
-    # TODO: encrypt and hash master password 
+    
 
 
 
