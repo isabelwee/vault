@@ -5,14 +5,13 @@ import sys
 
 def connect_to_db():
     try:
-        db = psycopg2.connct(dbname="VaultDB")
+        return psycopg2.connect(dbname="vaultdb")
     except psycopg2.Error as err:
         print("DB error: ", err)
     except Exception as err:
         print("Internal Error: ", err)
         raise err
-    finally:
-        if db is not None:
-            db.close()
-    sys.exit(0)
 
+def close_db(db):
+    if db is not None:
+        db.close()

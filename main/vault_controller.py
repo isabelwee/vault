@@ -1,16 +1,29 @@
 #! /usr/bin/env python3
 import connect_db
 import argparse
-import getpass
+import master_pwd
+from getpass import getpass
+from init_account import account_exists, create_account
 
 
 def main():
+    # TODO: create account feature
+    # check if account exists, if not, pass it into create account function
+    if not account_exists():
+        create_account()
+
     arg_parser = argparse.ArgumentParser(
         description="Local Password Manager Vault", usage="[options]"
     )
 
-    master_password_plain = getpass.getpass("Enter master password: ").encode()
-    print(master_password_plain)
+    master_pwd_plain = getpass.getpass("Enter master password: ").encode()
+    hashed = master_pwd.get_hashed_masterpwd(master_pwd_plain)
+
+
+    test = getpass.getpass("Enter master password again: ").encode()
+    print(master_pwd.checkpw(test, hashed))
+    # TODO: encrypt and hash master password 
+
 
 
 main()
