@@ -11,6 +11,7 @@ def main():
     # check if account exists, if not, pass it into create account function
     if not account_exists():
         create_account()
+        
 
     arg_parser = argparse.ArgumentParser(
         description="Local Password Manager Vault", usage="[options]"
@@ -19,11 +20,7 @@ def main():
     # TODO: encrypt and hash master password 
     master_pwd_plain = getpass("Enter master password: ").encode()
     hashed = master_pwd.get_hashed_masterpwd(master_pwd_plain)
-
-    test = getpass.getpass("Enter master password again: ").encode()
-    print(master_pwd.checkpw(test, hashed))
+    # check masterpwd
     
-
-
 
 main()

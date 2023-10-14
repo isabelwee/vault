@@ -1,10 +1,9 @@
 -- create the users table 
 CREATE TABLE IF NOT EXISTS Vault (
     app_name    TEXT PRIMARY KEY    NOT NULL,
-    url         TEXT,
     username    TEXT,
     user_email  TEXT,
-    password    TEXT 
+    password    TEXT                NOT NULL
 );
 
 
