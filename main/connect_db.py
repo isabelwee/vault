@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 import psycopg2
 import sys
 
@@ -14,3 +15,4 @@ def connect_to_db():
         if db is not None:
             db.close()
     sys.exit(0)
+
