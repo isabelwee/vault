@@ -11,7 +11,6 @@ def main():
     # check if account exists, if not, pass it into create account function
     if not account_exists():
         create_account()
-        
 
     arg_parser = argparse.ArgumentParser(
         description="Local Password Manager Vault", usage="[options]"

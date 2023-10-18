@@ -53,7 +53,7 @@ def register_password():
                 break
         break
 
-# hash password
+# TODO: hash password
 
 def db_create_account(email, password):
     db = connect_to_db()
