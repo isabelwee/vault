@@ -1,14 +1,13 @@
 #! /usr/bin/env python3
-import connect_db
 import argparse
-import master_pwd
-from getpass import getpass
+from master_pwd import login
 from init_account import account_exists, create_account
+from connect_db import close_db
+from arguments import add_args, run_args
 
 
 def main():
-    # TODO: create account feature
-    # check if account exists, if not, pass it into create account function
+    # Create a vault account if the user does not have one yet
     if not account_exists():
         create_account()
 
@@ -16,10 +15,18 @@ def main():
         description="Local Password Manager Vault", usage="[options]"
     )
 
-    # TODO: encrypt and hash master password 
-    master_pwd_plain = getpass("Enter master password: ").encode()
-    hashed = master_pwd.get_hashed_masterpwd(master_pwd_plain)
-    # check masterpwd
+    # Prompt user to log in 
+    print("Log into your account")
+    login()
     
+    # TODO: write up commands 
+    arg_parser = add_args(arg_parser)
+    args = arg_parser.parse_args()
+    run_args(args)
+
+    
+    close_db()
+
+
 
 main()

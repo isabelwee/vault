@@ -1,31 +1,36 @@
 from connect_db import connect_to_db
 from getpass import getpass
-from master_pwd import get_hashed_masterpwd
+from bcrypt import hashpw, checkpw, gensalt
 import sql_queries 
 import re
 
 
-# checks if user has a password vault
+# Checks if user has a password vault
 def account_exists():
     db = connect_to_db()
     cur = db.cursor()
-    cur.execute(sql_queries.get_row(), ['admin_account'])
+    cur.execute(sql_queries.get_row(), ['~'])
     account = cur.fetchall()
 
     return False if not account else True
 
-# creates a new vault account
+# Prompts user to create a new vault account
 def create_account():
     print("It seems you don't have an account. Let's begin the registration process :)")
     print("---------------------------------------------------------------------------")
+
+    print("Register an email: ")
     email = register_email()
+
+    print("Create a master password. must include at least one capital letter, one number and one special character: ")
     hashed_password = register_password()
+
     db_create_account(email, hashed_password)
     print("Account successfully created!")
     print("---------------------------------------------------------------------------")
 
+# Prompts user to register a valid email
 def register_email():
-    print("Register an email: ")
     while True:
         email = input()
         if not re.search(r'@[a-z]+\.com', email):
@@ -33,8 +38,8 @@ def register_email():
         else:
             return email
 
+# Prompts user to register a valid master password
 def register_password():
-    print("Create a master password. must include at least one capital letter, one number and one special character: ")
     while True:
         password = getpass()
         if len(password) < 8:
@@ -53,10 +58,15 @@ def register_password():
                 break
         break
 
-# TODO: hash password
+    return hashpw(password, gensalt())
 
+# Creates an admin account in the database
 def db_create_account(email, password):
     db = connect_to_db()
     cur = db.cursor()
+
     cur.execute(sql_queries.insert_row(), ['~', email, email, password])
+    db.commit()
+
+    cur.close()
 
