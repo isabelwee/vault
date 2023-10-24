@@ -19,7 +19,7 @@ def get_db_password():
     db = connect_to_db()
     cur = db.cursor()
 
-    cur.execute(sql_queries.get_row(), ['~'])
+    cur.execute(sql_queries.db_get_row(), ['~'])
     account = cur.fetchall()
     cur.close()
 

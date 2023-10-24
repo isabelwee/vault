@@ -2,6 +2,11 @@
 from connect_db import connect_to_db
 import sql_queries
 
+
+# TODO: exceptions for when user types in wrong inputs (mainly app_name)
+# TODO: implement password generator function
+# TODO: update_username function - need to check if there is a username 
+
 def run_args(args):
     if args.add_gen:
         add_account_gen_pwd(args)
@@ -23,28 +28,115 @@ def run_args(args):
         ...
 
 
-# given account details, adds it to the database as a new row
+# given account details (email, optionally usrname), adds it to the database as a new account
+# generates a password for that user's account
 def add_account_gen_pwd(args):
     db = connect_to_db()
     cur = db.cursor()
     
     password = generate_pwd()
-    # check number of arguments to see if there's a username
+    app_name = args[0]
+    # TODO: hash password
+
     if len(vars(args)) == 2:
         # if there is no username
-        ...
+        user_email = args[1]
+        cur.execute(sql_queries.db_insert_row_no_username(), [app_name, user_email, password])
     else:
         # if there is username
-        cur.execute(sql_queries.insert_row(), [args[0], args[1], args[2], password])
+        username = args[1]
+        user_email = args[2]
+        cur.execute(sql_queries.db_insert_row(), [app_name, username, user_email, password])
 
     
     db.commit()
-
     cur.close()
 
-# TODO: implement function
 def generate_pwd():
     ...
+
+# given account details (email, pwd, optionally usrname), adds it to the database as a new account
+def add_account_has_pwd(args):
+    db = connect_to_db()
+    cur = db.cursor()
+
+    app_name = args[0]
+    if len(vars(args)) == 3:
+        # if there is no username
+        user_email = args[1]
+        password = args[2]
+        cur.execute(sql_queries.db_insert_row_no_username(), [app_name, user_email, password])
+    else:
+        # if there is a username
+        username = args[1]
+        user_email = args[2]
+        password = args[3]
+        cur.execute(sql_queries.db_insert_row(), [app_name, username, user_email, password])
+    
+    db.commit()
+    cur.close()
+
+# given an app name, deletes all related details from the vault
+def delete_account(args):
+    # TODO: check that app name is correct/exists in the database
+    db = connect_to_db()
+    cur = db.cursor()
+
+    app_name = args[0]
+    cur.execute(sql_queries.db_delete_row(), [app_name])
+
+    db.commit()
+    cur.close()
+
+# given an old and new app name, updates the database accordingly
+def update_app_name(args):
+    # TODO: check that app name is correct/exists in the database
+    db = connect_to_db()
+    cur = db.cursor()
+
+    new_name = args[0]
+    old_name = args[1]
+    cur.execute(sql_queries.db_update_app_name(), [new_name, old_name])
+
+    db.commit()
+    cur.close()
+
+# given the name of an app in the vault, updates the associated username
+
+def update_username(args):
+    # TODO: check that app name is correct/exists in the database
+    db = connect_to_db()
+    cur = db.cursor()
+
+    new_username = args[0]
+    app_name = args[1]
+    cur.execute(sql_queries.db_update_username(), [new_username, app_name])
+
+    db.commit()
+    cur.close()
+
+# given the name of an app in the vault, updates the associated email
+def update_email(args):
+    # TODO: check that app name is correct/exists in the database
+    db = connect_to_db()
+    cur = db.cursor()
+
+    new_email = args[0]
+    app_name = args[1]
+    cur.execute(sql_queries.update_email(), [new_email, app_name])
+
+    db.commit()
+    cur.close()
+
+def update_password():
+    ...
+
+def list_all_accounts():
+    ...
+
+def query_account():
+    ...
+
 
 def add_args(arg_parser):
     arg_parser.add_argument(

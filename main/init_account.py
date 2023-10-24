@@ -9,7 +9,7 @@ import re
 def account_exists():
     db = connect_to_db()
     cur = db.cursor()
-    cur.execute(sql_queries.get_row(), ['~'])
+    cur.execute(sql_queries.db_get_row(), ['~'])
     account = cur.fetchall()
 
     return False if not account else True
@@ -65,7 +65,7 @@ def db_create_account(email, password):
     db = connect_to_db()
     cur = db.cursor()
 
-    cur.execute(sql_queries.insert_row(), ['~', email, email, password])
+    cur.execute(sql_queries.db_insert_row(), ['~', email, email, password])
     db.commit()
 
     cur.close()
