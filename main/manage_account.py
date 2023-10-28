@@ -1,8 +1,8 @@
 from connect_db import connect_to_db
 from getpass import getpass
 from bcrypt import hashpw, checkpw, gensalt
-import sql_queries 
-import re
+from main.manage_passwords import get_db_masterpwd
+import sql_queries, sys
 
 
 # Checks if user has a password vault
@@ -72,3 +72,14 @@ def db_create_account(email, password):
 
     cur.close()
 
+
+# Checks if input is same as password stored in the database 
+def login():
+    # verify password
+    input = getpass("Enter master password: ").encode()
+    if not checkpw(input, get_db_masterpwd()):
+        print("Incorrect password. Run the program again.")
+        sys.exit(0)
+    else:
+        print("\033[1m================ Successfully logged in to the Vault ================\033[0m")
+        print("Enter 'help' to view command options")

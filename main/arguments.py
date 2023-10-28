@@ -1,8 +1,9 @@
 #! /usr/bin/env python3
 from connect_db import connect_to_db, close_db
 from bcrypt import hashpw, checkpw, gensalt
-from master_pwd import get_db_password
+from main.manage_passwords import get_db_password
 from values import Range, Commands
+from cryptography.fernet import Fernet
 import sql_queries, secrets, string
 
 
@@ -44,7 +45,7 @@ def run(cmd):
 # given account details (email, optionally usrname), adds it to the database as a new account
 # generates a password for that user's account
 def add_account_gen_pwd(cmd, db):
-    if not validate_num_args(cmd, Range.MIN_ADD_GEN_ARGS.value, Range.MAX_ADD_GEN_ARGS.value):
+    if not validate_num_args(cmd[1:], Range.MIN_ADD_GEN_ARGS.value, Range.MAX_ADD_GEN_ARGS.value):
         return
 
     cur = db.cursor()
@@ -79,6 +80,8 @@ def generate_pwd():
         
         if any(char in string.punctuation for char in pwd) and sum(char in string.digits for char in pwd) >= 1:
             break
+    
+    return pwd
 
 # given account details (email, pwd, optionally usrname), adds it to the database as a new account
 def add_account_has_pwd(args, db):

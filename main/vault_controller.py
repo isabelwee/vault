@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 import argparse, sys
-from master_pwd import login
-from init_account import account_exists, create_account
+from main.manage_passwords import login
+from main.manage_account import account_exists, create_account
 from connect_db import close_db
 from arguments import run, print_options
 from values import Commands
