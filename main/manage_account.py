@@ -1,15 +1,15 @@
 from connect_db import connect_to_db
 from getpass import getpass
 from bcrypt import hashpw, checkpw, gensalt
-from main.manage_passwords import get_db_masterpwd
+from manage_passwords import get_db_masterpwd, write_key
 import sql_queries, sys
 
 
 # Checks if user has a password vault
-def account_exists():
+def account_exists(app_name):
     db = connect_to_db()
     cur = db.cursor()
-    cur.execute(sql_queries.db_get_row(), ['~'])
+    cur.execute(sql_queries.db_get_row(), [app_name])
     account = cur.fetchall()
 
     return False if not account else True
@@ -24,6 +24,9 @@ def create_account():
 
     print("Create a master password. must include at least one capital letter, one number and one special character: ")
     hashed_password = register_password()
+
+    # establish a key to be used for all the password encryptions
+    write_key()
 
     db_create_account(email, hashed_password)
     print("Account successfully created!")
@@ -81,5 +84,5 @@ def login():
         print("Incorrect password. Run the program again.")
         sys.exit(0)
     else:
-        print("\033[1m================ Successfully logged in to the Vault ================\033[0m")
+        print("\033[1m=================== Successfully logged in to the Vault ===================\033[0m")
         print("Enter 'help' to view command options")

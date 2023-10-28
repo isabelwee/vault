@@ -1,10 +1,12 @@
 #! /usr/bin/env python3
 from connect_db import connect_to_db, close_db
 from bcrypt import hashpw, checkpw, gensalt
-from main.manage_passwords import get_db_password
+from manage_passwords import get_db_masterpwd, generate_pwd, encrypt_password, decrypt_password
+from manage_account import account_exists
+from getpass import getpass
 from values import Range, Commands
-from cryptography.fernet import Fernet
-import sql_queries, secrets, string
+from psycopg2.errors import UniqueViolation
+import sql_queries
 
 
 
@@ -15,166 +17,132 @@ import sql_queries, secrets, string
 
 def run(cmd):
     db = connect_to_db()
-    if cmd[0] == Commands.ADD_GEN.value:
-        add_account_gen_pwd(cmd, db)
-    elif cmd[0] == Commands.ADD_INPUT.value:
-        add_account_has_pwd(cmd, db)
-    elif cmd[0] == Commands.DELETE.value:
+    if cmd == Commands.ADD_GEN.value:
+        add_account(db, True)
+    elif cmd == Commands.ADD_INPUT.value:
+        add_account(db, False)
+    elif cmd == Commands.DELETE.value:
+        delete_account(db)
+    elif cmd == Commands.UPDATE_APP_NAME.value:
+        update_app_name(db)
+    elif cmd == Commands.UPDATE_USERNAME.value:
+        update_username(db)
+    elif cmd == Commands.UPDATE_EMAIL.value:
         ...
-    elif cmd[0] == Commands.UPDATE_APP_NAME.value:
+    elif cmd == Commands.UPDATE_PASSWORD.value:
         ...
-    elif cmd[0] == Commands.UPDATE_USERNAME.value:
+    elif cmd == Commands.LIST_ACCOUNTS.value:
         ...
-    elif cmd[0] == Commands.UPDATE_EMAIL.value:
+    elif cmd == Commands.QUERY_ACCOUNT.value:
         ...
-    elif cmd[0] == Commands.UPDATE_PASSWORD.value:
-        ...
-    elif cmd[0] == Commands.LIST_ACCOUNTS.value:
-        ...
-    elif cmd[0] == Commands.QUERY_ACCOUNT.value:
-        ...
-    elif cmd[0] == Commands.HELP.value:
+    elif cmd == Commands.HELP.value:
         print_options()
     else: 
-        print("Usage: command [<arguments>]")
+        print("Usage: command")
         print("Enter 'help' to view command options\n")
 
     close_db(db)
 
 
-# given account details (email, optionally usrname), adds it to the database as a new account
-# generates a password for that user's account
-def add_account_gen_pwd(cmd, db):
-    if not validate_num_args(cmd[1:], Range.MIN_ADD_GEN_ARGS.value, Range.MAX_ADD_GEN_ARGS.value):
-        return
-
+# creates a new account in the database with the inputted details
+def add_account(db, gen_pwd):
     cur = db.cursor()
-    
-    password = generate_pwd()
-    app_name = cmd[0]
-    # TODO: hash password
 
-    # if there is no username
-    if len(cmd) == 2:
-        user_email = cmd[1]
-        cur.execute(sql_queries.db_insert_row_no_username(), [app_name, user_email, password])
-    # if there is username
+    app_name = input("Enter app name: ")
+    email = input("Enter email: ")
+    username = input("Enter username: ")
+
+    if gen_pwd:
+        password = encrypt_password(generate_pwd())
     else:
-        username = cmd[1]
-        user_email = cmd[2]
-        cur.execute(sql_queries.db_insert_row(), [app_name, username, user_email, password])
+        password = getpass("Enter password: ").encode()
 
+    try:
+        cur.execute(sql_queries.db_insert_row(), [app_name, username, email, password])
+    except UniqueViolation:
+        print(f"An account for {app_name} already exists")
+    else:
+        print(f"Account for {app_name} successfully created")
+            # TODO: could possibly use the query function to show the account
     
     db.commit()
     cur.close()
 
-
-# adapted from https://geekflare.com/password-generator-python-code/
-def generate_pwd():
-    alphabet = string.ascii_letters + string.digits + string.punctuation
-    pwd_len = 12
-    pwd = ''
-    while True:
-        for _ in range(pwd_len):
-            pwd += ''.join(secrets.choice(alphabet))
-        
-        if any(char in string.punctuation for char in pwd) and sum(char in string.digits for char in pwd) >= 1:
-            break
-    
-    return pwd
-
-# given account details (email, pwd, optionally usrname), adds it to the database as a new account
-def add_account_has_pwd(args, db):
-    if validate_num_args(args, Range.MIN_ADD_INPUT, Range.MAX_ADD_INPUT) == False:
-        return 
-    
-    cur = db.cursor()
-
-    app_name = args[0]
-    if len(vars(args)) == 3:
-        # if there is no username
-        user_email = args[1]
-        password = args[2]
-        cur.execute(sql_queries.db_insert_row_no_username(), [app_name, user_email, password])
-    else:
-        # if there is a username
-        username = args[1]
-        user_email = args[2]
-        password = args[3]
-        cur.execute(sql_queries.db_insert_row(), [app_name, username, user_email, password])
-    
-    db.commit()
-    cur.close()
 
 # given an app name, deletes all related details from the vault
-def delete_account(args):
-    # TODO: check correct number of args given
-    # TODO: check that app name is correct/exists in the database
-    db = connect_to_db()
+def delete_account(db):
     cur = db.cursor()
 
-    app_name = args[0]
-    cur.execute(sql_queries.db_delete_row(), [app_name])
+    app_name = input("Enter app name of account to delete: ")
+
+    if not account_exists(app_name):
+        print(f"An account for {app_name} does not exist")
+    else:
+        cur.execute(sql_queries.db_delete_row(), [app_name])
+        print(f"Account for {app_name} successfully deleted")
 
     db.commit()
     cur.close()
 
 # given an old and new app name, updates the database accordingly
-def update_app_name(args):
-    # TODO: check that app name is correct/exists in the database
+def update_app_name(db):
     db = connect_to_db()
     cur = db.cursor()
 
-    new_name = args[0]
-    old_name = args[1]
-    cur.execute(sql_queries.db_update_app_name(), [new_name, old_name])
+    old_name = input("Enter current name of app: ")
+    if not account_exists(old_name):
+        print(f"An account for {old_name} does not exist")
+    else:
+        new_name = input("Enter new name: ")
+        cur.execute(sql_queries.db_update_app_name(), [new_name, old_name])
+        print(f"App name successfully updated to {new_name}")
 
     db.commit()
     cur.close()
 
 # given the name of an app in the vault, updates the associated username
-
-def update_username(args):
-    # TODO: check that app name is correct/exists in the database
+def update_username(db):
     db = connect_to_db()
     cur = db.cursor()
 
-    new_username = args[0]
-    app_name = args[1]
-    cur.execute(sql_queries.db_update_username(), [new_username, app_name])
+    app_name = input("Enter app name of the username to change: ")
+    if not account_exists(app_name):
+        print(f"An account for {app_name} does not exist")
+    else:
+        new_username = input("Enter new username: ")
+        cur.execute(sql_queries.db_update_username(), [new_username, app_name])
+        print(f"Username for {app_name} successfully updated to {new_username}")
 
     db.commit()
     cur.close()
 
 # given the name of an app in the vault, updates the associated email
-def update_email(args):
-    # TODO: check that app name is correct/exists in the database
+def update_email(db):
     db = connect_to_db()
     cur = db.cursor()
 
-    new_email = args[0]
-    app_name = args[1]
-    cur.execute(sql_queries.db_update_email(), [new_email, app_name])
-
+    app_name = input("Enter app name of the email to change: ")
+    if not account_exists(app_name):
+        print(f"An account for {app_name} does not exist")
+    else:
+        new_email = input("Enter new email: ")
+        cur.execute(sql_queries.db_update_email(), [new_email, app_name])
+        print(f"Email for {app_name} successfully updated to {new_email}")
+    
     db.commit()
     cur.close()
 
-def update_password(args):
-    # TODO: check that app name is correct/exists in the database
-    password = args[0]
-    app_name = args[1]
-
-    # get password from database and compare to new password, if the same throw an error
-    if not checkpw(password.encode(), get_db_password()):
-        print("Error: New password and old password are the same")
-        return
-    
-    hashed_password = hashpw(password, gensalt())
-    
+def update_password(db):
     db = connect_to_db()
     cur = db.cursor()
 
-    cur.execute(sql_queries.db_update_password(), [hashed_password, app_name])
+    app_name = input("Enter app name of the password to change: ")
+    if not account_exists(app_name):
+        print(f"An account for {app_name} does not exist")
+    else:
+        new_password = encrypt_password(input("Enter new password: ")) 
+        cur.execute(sql_queries.db_update_password(), [new_password, app_name]) 
+        print(f"Password for {app_name} successfully updated")
 
     db.commit()
     cur.close()
@@ -184,10 +152,13 @@ def list_all_accounts():
     db = connect_to_db()
     cur = db.cursor()
 
+    answer = input("Warning: all passwords will be visible. Do you wish to continue? [y/n]:")
+    if answer == 'y':
+
     # get everything from vault
     # iterate through
-    cur.execute("SELECT * from Vault")
-    print(cur.fetchall)
+        cur.execute("SELECT * from Vault")
+        print(cur.fetchall)
 
 
     # cursor.execute("SELECT * from Vault")
@@ -223,31 +194,31 @@ def validate_num_args(cmd, low, high):
 def print_options():
     print("\n\033[1mOPTIONS:\033[0m")
     
-    print("\t\033[1m-a\033[0m <app_name> [<username>] <email>")
+    print("\t\033[1m-a\033")
     print("\t\tAdd a new account to the vault, password will be auto-generated\n")
 
-    print("\t\033[1m-i\033[0m <app_name> [<username>] <email> <password>")
+    print("\t\033[1m-i\033[0m")
     print("\t\tAdd a new account to the vault with an existing password\n")
     
-    print("\t\033[1m-d\033[0m <app_name>")
+    print("\t\033[1m-d\033[0m")
     print("\t\tDelete an account in the vault with the given app name\n")
 
-    print("\t\033[1m-uapp\033[0m <new_app_name> <current_app_name>")
+    print("\t\033[1m-uapp\033[0m")
     print("\t\tUpdate app name of an existing account\n")
 
-    print("\t\033[1m-uusr\033[0m <new_username> <app_name>")
+    print("\t\033[1m-uusr\033[0m")
     print("\t\tUpdates username of account of the given app name\n")
 
-    print("\t\033[1m-uemail\033[0m <new_email> <app_name>")
+    print("\t\033[1m-uemail\033[0m")
     print("\t\tUpdates email of account of the given app name\n")
 
-    print("\t\033[1m-upwd\033[0m <new_password> <app_name>")
+    print("\t\033[1m-upwd\033[0m")
     print("\t\tUpdates password of account of the given app name\n")
 
     print("\t\033[1m-l\033[0m")
     print("\t\tList all the accounts in the password vault\n")
 
-    print("\t\033[1m-q\033[0m <app_name>")
+    print("\t\033[1m-q\033[0m")
     print("\t\tLook up an account by app name\n")
 
     print("\t\033[1mhelp\033[0m")

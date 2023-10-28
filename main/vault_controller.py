@@ -1,14 +1,12 @@
 #! /usr/bin/env python3
-import argparse, sys
-from main.manage_passwords import login
-from main.manage_account import account_exists, create_account
-from connect_db import close_db
-from arguments import run, print_options
+import sys
+from manage_account import account_exists, create_account, login
+from arguments import run
 from values import Commands
 
 def main():
     # Create a vault account if the user does not have one yet
-    if not account_exists():
+    if not account_exists('~'):
         create_account()
 
     # Prompt user to log in 
@@ -19,8 +17,8 @@ def main():
     # arg_parser = add_args(arg_parser)
     # args = arg_parser.parse_args()
     while True:
-        cmd = input("Enter command: ").split(' ')
-        if cmd[0] == Commands.QUIT_PROGRAM.value:
+        cmd = input("Enter command: ")
+        if cmd == Commands.QUIT_PROGRAM.value:
             print("Logging out")
             sys.exit(0)
         else:
