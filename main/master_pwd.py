@@ -12,7 +12,8 @@ def login():
         print("Incorrect password. Run the program again.")
         sys.exit(0)
     else:
-        print("Successfully logged in!")
+        print("\033[1m================ Successfully logged in to the Vault ================\033[0m")
+        print("Enter 'help' to view command options")
 
 
 def get_db_password():
