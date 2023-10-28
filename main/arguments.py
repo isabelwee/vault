@@ -1,17 +1,24 @@
 #! /usr/bin/env python3
-from connect_db import connect_to_db
+from connect_db import connect_to_db, close_db
+from bcrypt import hashpw, checkpw, gensalt
+from master_pwd import get_db_password
+from values import Range
 import sql_queries
+import argparse
+
 
 
 # TODO: exceptions for when user types in wrong inputs (mainly app_name)
 # TODO: implement password generator function
 # TODO: update_username function - need to check if there is a username 
+# TODO: implement MFA for updating a password ?
 
 def run_args(args):
+    db = connect_to_db()
     if args.add_gen:
-        add_account_gen_pwd(args)
+        add_account_gen_pwd(args, db)
     elif args.add_input:
-        add_account_has_pwd(args)
+        add_account_has_pwd(args, db)
     elif args.delete:
         ...
     elif args.update_app:
@@ -27,11 +34,14 @@ def run_args(args):
     elif args.query:
         ...
 
+    close_db(db)
+
 
 # given account details (email, optionally usrname), adds it to the database as a new account
 # generates a password for that user's account
-def add_account_gen_pwd(args):
-    db = connect_to_db()
+def add_account_gen_pwd(args, db):
+    validate_num_args(args, Range.MIN_ADD_GEN_ARGS, Range.MAX_ADD_GEN_ARGS)
+
     cur = db.cursor()
     
     password = generate_pwd()
@@ -56,7 +66,9 @@ def generate_pwd():
     ...
 
 # given account details (email, pwd, optionally usrname), adds it to the database as a new account
-def add_account_has_pwd(args):
+def add_account_has_pwd(args, db):
+    validate_num_args(args, Range.MIN_ADD_INPUT, Range.MAX_ADD_INPUT)
+
     db = connect_to_db()
     cur = db.cursor()
 
@@ -78,6 +90,7 @@ def add_account_has_pwd(args):
 
 # given an app name, deletes all related details from the vault
 def delete_account(args):
+    # TODO: check correct number of args given
     # TODO: check that app name is correct/exists in the database
     db = connect_to_db()
     cur = db.cursor()
@@ -123,36 +136,82 @@ def update_email(args):
 
     new_email = args[0]
     app_name = args[1]
-    cur.execute(sql_queries.update_email(), [new_email, app_name])
+    cur.execute(sql_queries.db_update_email(), [new_email, app_name])
 
     db.commit()
     cur.close()
 
-def update_password():
-    ...
+def update_password(args):
+    # TODO: check that app name is correct/exists in the database
+    password = args[0]
+    app_name = args[1]
+
+    # get password from database and compare to new password, if the same throw an error
+    if not checkpw(password.encode(), get_db_password()):
+        print("Error: New password and old password are the same")
+        return
+    
+    hashed_password = hashpw(password, gensalt())
+    
+    db = connect_to_db()
+    cur = db.cursor()
+
+    cur.execute(sql_queries.db_update_password(), [hashed_password, app_name])
+
+    db.commit()
+    cur.close()
+
 
 def list_all_accounts():
-    ...
+    db = connect_to_db()
+    cur = db.cursor()
+
+    # get everything from vault
+    # iterate through
+    cur.execute("SELECT * from Vault")
+    print(cur.fetchall)
+
+
+    # cursor.execute("SELECT * from Vault")
+    #     record = cursor.fetchall()  
+    #     for i in range(len(record)):
+    #         entry = record[i]
+    #         for j in range(len(entry)):
+    #             titles = ["URL: ", "Username: ", "Password: "]
+    #             if titles[j] == "Password: ":
+    #                 bytes_row = entry[j]
+    #                 password = master_password.decrypt_password(bytes_row, master_password_hash)
+    #                 print("Password: " + str(password.decode('utf-8')))
+    #             else:
+    #                 print(titles[j] + entry[j])
+
+            
+    #         print( "----------")
+
 
 def query_account():
     ...
 
+def validate_num_args(arg, low, high):
+    if (len(arg) < low or len(arg) > high):
+        raise argparse.ArgumentTypeError('Incorrect number of arguments. View options for more help.')
 
 def add_args(arg_parser):
     arg_parser.add_argument(
         "-a",
         "--add_gen", 
         type=str, 
-        nargs='2,3', 
+        nargs=3, 
         help="Add new entry, password will be auto-generated\n"
         "Username is optional",
         metavar=("[APP_NAME]", "<USERNAME>", "[EMAIL]"))
+
     
     arg_parser.add_argument(
         "-i", 
         "--add_input", 
         type=str, 
-        nargs='3,4', 
+        nargs=4, 
         help="Add new entry with manually inputted password\n"
         "Username is optional",
         metavar=("[APP_NAME]", "<USERNAME>", "[EMAIL]", "[PASSWORD]"))
@@ -200,7 +259,6 @@ def add_args(arg_parser):
     arg_parser.add_argument(
         "-l",
         "--list",
-        type=str,
         action="store_true",
         help="List all the accounts in the password vault")
     

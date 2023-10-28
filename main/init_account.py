@@ -33,29 +33,31 @@ def create_account():
 def register_email():
     while True:
         email = input()
-        if not re.search(r'@[a-z]+\.com', email):
-            print("Incorrect email format, try again")
-        else:
-            return email
+        # TODO: RESTORE AFTER TESTING!!!
+        # if not re.search(r'@[a-z]+\.com', email):
+        #     print("Incorrect email format, try again")
+        # else:
+        return email
 
 # Prompts user to register a valid master password
 def register_password():
     while True:
         password = getpass()
-        if len(password) < 8:
-            print("Make sure your password is at least 8 letters")
-        elif re.search('[0-9]',password) is None:
-            print("Make sure your password has a number in it")
-        elif re.search('[A-Z]',password) is None: 
-            print("Make sure your password has a capital letter in it")
-        elif re.search('[!@#$%^&*()]',password) is None: 
-            print("Make sure your password has a special character in it")
-        else:
-            print("Re-enter password: ")
-            password_validate = getpass()
-            if (password != password_validate):
-                print("Passwords do not match. Retry a new password:")
-                break
+        # TODO: RESTORE AFTWR TESTING!!!
+        # if len(password) < 8:
+        #     print("Make sure your password is at least 8 letters")
+        # elif re.search('[0-9]',password) is None:
+        #     print("Make sure your password has a number in it")
+        # elif re.search('[A-Z]',password) is None: 
+        #     print("Make sure your password has a capital letter in it")
+        # elif re.search('[!@#$%^&*()]',password) is None: 
+        #     print("Make sure your password has a special character in it")
+        # else:
+        #     print("Re-enter password: ")
+        #     password_validate = getpass()
+        #     if (password != password_validate):
+        #         print("Passwords do not match. Retry a new password:")
+        #         break
         break
 
     return hashpw(password, gensalt())

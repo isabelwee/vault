@@ -10,6 +10,7 @@ def main():
     # Create a vault account if the user does not have one yet
     if not account_exists():
         create_account()
+    
 
     arg_parser = argparse.ArgumentParser(
         description="Local Password Manager Vault", usage="[options]"
@@ -23,10 +24,6 @@ def main():
     arg_parser = add_args(arg_parser)
     args = arg_parser.parse_args()
     run_args(args)
-
-    
-    close_db()
-
 
 
 main()

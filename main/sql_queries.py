@@ -15,8 +15,11 @@ def db_update_app_name():
     return """UPDATE vault SET app_name = %s WHERE app_name = %s"""
 
 def db_update_username():
-    ...
+    return """UPDATE vault SET username = %s WHERE app_name = %s"""
     
 def db_update_email():
     return """UPDATE vault SET email = %s WHERE app_name = %s"""
+
+def db_update_password():
+    return """UPDATE vault SET password = %s WHERE app_name = %s"""
 
