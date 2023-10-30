@@ -23,3 +23,5 @@ def db_update_email():
 def db_update_password():
     return """UPDATE vault SET password = %s WHERE app_name = %s"""
 
+def db_fetch_vault():
+    return """SELECT * from Vault"""

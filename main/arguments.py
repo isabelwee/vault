@@ -6,7 +6,7 @@ from manage_account import account_exists
 from getpass import getpass
 from values import Range, Commands
 from psycopg2.errors import UniqueViolation
-import sql_queries
+import sql_queries, binascii
 
 
 
@@ -28,13 +28,13 @@ def run(cmd):
     elif cmd == Commands.UPDATE_USERNAME.value:
         update_username(db)
     elif cmd == Commands.UPDATE_EMAIL.value:
-        ...
+        update_email(db)
     elif cmd == Commands.UPDATE_PASSWORD.value:
-        ...
+        update_password(db)
     elif cmd == Commands.LIST_ACCOUNTS.value:
-        ...
+        list_all_accounts(db)
     elif cmd == Commands.QUERY_ACCOUNT.value:
-        ...
+        query_account(db)
     elif cmd == Commands.HELP.value:
         print_options()
     else: 
@@ -53,9 +53,11 @@ def add_account(db, gen_pwd):
     username = input("Enter username: ")
 
     if gen_pwd:
-        password = encrypt_password(generate_pwd())
+        password = generate_pwd()
     else:
-        password = getpass("Enter password: ").encode()
+        password = getpass("Enter password: ")
+
+    password = encrypt_password(password)
 
     try:
         cur.execute(sql_queries.db_insert_row(), [app_name, username, email, password])
@@ -148,47 +150,49 @@ def update_password(db):
     cur.close()
 
 
-def list_all_accounts():
-    db = connect_to_db()
+def list_all_accounts(db):
     cur = db.cursor()
 
-    answer = input("Warning: all passwords will be visible. Do you wish to continue? [y/n]:")
-    if answer == 'y':
+    cur.execute(sql_queries.db_fetch_vault())
+    accounts = cur.fetchall()
+    print(accounts)
 
-    # get everything from vault
-    # iterate through
-        cur.execute("SELECT * from Vault")
-        print(cur.fetchall)
+    for account in accounts:
+        if account[0] == '~':
+            continue
 
+        app_name = account[0]
+        username = account[1]
+        email = account[2]
+        password = decrypt_password(account[3].encode())
 
-    # cursor.execute("SELECT * from Vault")
-    #     record = cursor.fetchall()  
-    #     for i in range(len(record)):
-    #         entry = record[i]
-    #         for j in range(len(entry)):
-    #             titles = ["URL: ", "Username: ", "Password: "]
-    #             if titles[j] == "Password: ":
-    #                 bytes_row = entry[j]
-    #                 password = master_password.decrypt_password(bytes_row, master_password_hash)
-    #                 print("Password: " + str(password.decode('utf-8')))
-    #             else:
-    #                 print(titles[j] + entry[j])
+        list_account(app_name, username, email, password)
 
-            
-    #         print( "----------")
+def query_account(db):
+    cur = db.cursor()
 
+    print("Warning: password will be displayed. Do you wish to continue? [y/n]: ")
+    app_name = input("Enter the app name of the account you want to view: ")
 
-def query_account():
-    ...
+    cur.execute(sql_queries.db_get_row(), [app_name])
+    account = cur.fetchall()
 
-
-def validate_num_args(cmd, low, high):
-    if (len(cmd) < low or len(cmd) > high):
-        print("Incorrect number of arguments")
-        print("Enter 'help' to view command options\n")
-        return False
+    try:
+        username = account[0][1]
+        email = account[0][2]
+        password = account[0][3]
+    except IndexError:
+        print("Error: Account for that app doesn't exist\n")
     else:
-        return True
+        list_account(app_name, username, email, password)
+
+def list_account(app_name, username, email, password):
+    print("---------------------------------------------------------------------------")
+    print(f"\033[1m{app_name.upper()}\033[0m")
+    print(f"Username: {username}")
+    print(f"Email:    {email}")
+    print(f"Password: {password}")
+    print("---------------------------------------------------------------------------")
 
 
 def print_options():

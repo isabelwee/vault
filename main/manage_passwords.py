@@ -1,7 +1,7 @@
 from connect_db import connect_to_db
 from cryptography.fernet import Fernet
 import sql_queries
-import secrets, string
+import secrets, string, binascii
 
 def get_db_masterpwd():
     db = connect_to_db()
@@ -11,7 +11,7 @@ def get_db_masterpwd():
     account = cur.fetchall()
     cur.close()
 
-    return account[0][4]
+    return account[0][3]
 
 # adapted from https://geekflare.com/password-generator-python-code/
 def generate_pwd():
@@ -38,7 +38,9 @@ def load_key():
 def encrypt_password(plaintext):
     key = load_key()
     f = Fernet(key)
-    return f.encrypt(plaintext)
+    encrypted = f.encrypt(plaintext)
+
+    return encrypted
 
 def decrypt_password(encrypted):
     key = load_key()
