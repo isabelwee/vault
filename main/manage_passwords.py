@@ -1,7 +1,10 @@
 from connect_db import connect_to_db
-from cryptography.fernet import Fernet
+from Crypto.Cipher import AES 
+from Crypto.Random import get_random_bytes
+from base64 import b64encode, b64decode
 import sql_queries
 import secrets, string, binascii
+
 
 def get_db_masterpwd():
     db = connect_to_db()
@@ -27,22 +30,19 @@ def generate_pwd():
     
     return pwd.encode()
 
-def write_key():
-    key = Fernet.generate_key()
-    with open("key.key", "wb") as key_file:
-        key_file.write(key)
-
-def load_key():
-    return open("key.key", "rb").read()
 
 def encrypt_password(plaintext):
-    key = load_key()
-    f = Fernet(key)
-    encrypted = f.encrypt(plaintext)
+    key = get_random_bytes(16)
 
-    return encrypted
+    cipher = AES.new(key, AES.MODE_EAX)
+    encrypted, tag = cipher.encrypt_and_digest(str.encode(plaintext))
+
+    nonce = cipher.nonce
+    add_nonce = encrypted + nonce
+    
+    return b64encode(add_nonce).decode()
+
 
 def decrypt_password(encrypted):
-    key = load_key()
-    f = Fernet(key)
-    return f.decrypt(encrypted)
+    
+    return 

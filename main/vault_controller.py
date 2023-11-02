@@ -13,9 +13,7 @@ def main():
     print("Log into your account")
     login()
     
-    # TODO: write up commands 
-    # arg_parser = add_args(arg_parser)
-    # args = arg_parser.parse_args()
+    
     while True:
         cmd = input("Enter command: ")
         if cmd == Commands.QUIT_PROGRAM.value:
