@@ -2,7 +2,7 @@ from connect_db import connect_to_db
 from getpass import getpass
 from bcrypt import hashpw, checkpw, gensalt
 from manage_passwords import get_db_masterpwd, write_key
-import sql_queries, sys
+import sql_queries, sys, re
 
 
 # Checks if user has a password vault
@@ -25,7 +25,7 @@ def create_account():
     print("Create a master password. must include at least one capital letter, one number and one special character: ")
     hashed_password = register_password()
 
-    # establish a key to be used for all the password encryptions
+    # # establish a key to be used for all the password encryptions
     write_key()
 
     db_create_account(email, hashed_password)
@@ -36,34 +36,34 @@ def create_account():
 def register_email():
     while True:
         email = input()
-        # TODO: RESTORE AFTER TESTING!!!
-        # if not re.search(r'@[a-z]+\.com', email):
-        #     print("Incorrect email format, try again")
-        # else:
-        return email
+
+        if not re.search(r'@[a-z]+\.com', email):
+            print("Incorrect email format, try again")
+        else:
+            return email
 
 # Prompts user to register a valid master password
 def register_password():
     while True:
         password = getpass()
-        # TODO: RESTORE AFTWR TESTING!!!
-        # if len(password) < 8:
-        #     print("Make sure your password is at least 8 letters")
-        # elif re.search('[0-9]',password) is None:
-        #     print("Make sure your password has a number in it")
-        # elif re.search('[A-Z]',password) is None: 
-        #     print("Make sure your password has a capital letter in it")
-        # elif re.search('[!@#$%^&*()]',password) is None: 
-        #     print("Make sure your password has a special character in it")
-        # else:
-        #     print("Re-enter password: ")
-        #     password_validate = getpass()
-        #     if (password != password_validate):
-        #         print("Passwords do not match. Retry a new password:")
-        #         break
-        break
+        if len(password) < 8:
+            print("Make sure your password is at least 8 letters")
 
-    return hashpw(password, gensalt())
+        elif re.search('[0-9]',password) is None:
+            print("Make sure your password has a number in it")
+        elif re.search('[A-Z]',password) is None: 
+            print("Make sure your password has a capital letter in it")
+        elif re.search('[!@#$%^&*()]',password) is None: 
+            print("Make sure your password has a special character in it")
+        else:
+            print("Re-enter password: ")
+            password_validate = getpass()
+            if (password != password_validate):
+                print("Passwords do not match. Retry a new password:")
+            else:
+                break
+
+        return hashpw(password, gensalt())
 
 # Creates an admin account in the database
 def db_create_account(email, password):
@@ -80,7 +80,7 @@ def db_create_account(email, password):
 def login():
     # verify password
     input = getpass("Enter master password: ").encode()
-    if not checkpw(input, get_db_masterpwd()):
+    if not checkpw(input, bytes(get_db_masterpwd(), encoding='utf-8')):
         print("Incorrect password. Run the program again.")
         sys.exit(0)
     else:

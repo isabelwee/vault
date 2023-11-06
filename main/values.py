@@ -14,7 +14,7 @@ class Commands(Enum):
     UPDATE_APP_NAME = '-uapp'
     UPDATE_USERNAME = '-uusr'
     UPDATE_EMAIL = '-uemail'
-    UPDATE_PASSWORD = 'upwd'
+    UPDATE_PASSWORD = '-upwd'
     LIST_ACCOUNTS = '-l'
     QUERY_ACCOUNT = '-q'
     HELP = 'help'

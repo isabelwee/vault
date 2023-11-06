@@ -9,12 +9,6 @@ from psycopg2.errors import UniqueViolation
 import sql_queries, binascii
 
 
-
-# TODO: exceptions for when user types in wrong inputs (mainly app_name)
-# TODO: implement password generator function
-# TODO: update_username function - need to check if there is a username 
-# TODO: implement MFA for updating a password ?
-
 def run(cmd):
     db = connect_to_db()
     if cmd == Commands.ADD_GEN.value:
@@ -65,7 +59,6 @@ def add_account(db, gen_pwd):
         print(f"An account for {app_name} already exists")
     else:
         print(f"Account for {app_name} successfully created")
-            # TODO: could possibly use the query function to show the account
     
     db.commit()
     cur.close()
@@ -155,7 +148,6 @@ def list_all_accounts(db):
 
     cur.execute(sql_queries.db_fetch_vault())
     accounts = cur.fetchall()
-    print(accounts)
 
     for account in accounts:
         if account[0] == '~':
@@ -164,7 +156,7 @@ def list_all_accounts(db):
         app_name = account[0]
         username = account[1]
         email = account[2]
-        password = decrypt_password(account[3].encode())
+        password = decrypt_password(account[3])
 
         list_account(app_name, username, email, password)
 
@@ -180,7 +172,7 @@ def query_account(db):
     try:
         username = account[0][1]
         email = account[0][2]
-        password = account[0][3]
+        password = decrypt_password(account[0][3])
     except IndexError:
         print("Error: Account for that app doesn't exist\n")
     else:

@@ -28,21 +28,50 @@ def generate_pwd():
         if any(char in string.punctuation for char in pwd) and sum(char in string.digits for char in pwd) >= 1:
             break
     
-    return pwd.encode()
+    return pwd
+
+def write_key():
+    key = get_random_bytes(32)
+    with open("key.key", "wb") as f:
+        f.write(key)
+
+def get_key():
+    with open("key.key", "rb") as f:
+        key = f.read()
+        return key
 
 
 def encrypt_password(plaintext):
-    key = get_random_bytes(16)
+    key = get_key()
+    iv = get_random_bytes(AES.block_size)
 
-    cipher = AES.new(key, AES.MODE_EAX)
-    encrypted, tag = cipher.encrypt_and_digest(str.encode(plaintext))
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    plaintext_bytes = plaintext.encode('utf-8')
 
-    nonce = cipher.nonce
-    add_nonce = encrypted + nonce
-    
-    return b64encode(add_nonce).decode()
+    # pad password to be a multiple of 16 bytes
+    padding_len = AES.block_size - len(plaintext_bytes) % AES.block_size
+    padded_password = plaintext_bytes + bytes([padding_len] * padding_len)
+
+    ciphertext = cipher.encrypt(padded_password)
+    encrypted_password = b64encode(iv + ciphertext).decode('utf-8')
+
+    return encrypted_password
 
 
-def decrypt_password(encrypted):
-    
-    return 
+def decrypt_password(encrypted_pwd):
+    key = get_key()
+    encrypted_data = b64decode(encrypted_pwd)
+
+    # extract the IV and ciphertext
+    iv = encrypted_data[:AES.block_size]
+    ciphertext = encrypted_data[AES.block_size:]
+
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+
+    decrypted = cipher.decrypt(ciphertext)
+
+    # unpad the password
+    padding_len = decrypted[-1]
+    decrypted = decrypted[:-padding_len]
+
+    return decrypted.decode()
