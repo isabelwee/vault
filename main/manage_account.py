@@ -48,7 +48,6 @@ def register_password():
         password = getpass()
         if len(password) < 8:
             print("Make sure your password is at least 8 letters")
-
         elif re.search('[0-9]',password) is None:
             print("Make sure your password has a number in it")
         elif re.search('[A-Z]',password) is None: 
@@ -63,7 +62,7 @@ def register_password():
             else:
                 break
 
-        return hashpw(password, gensalt())
+    return hashpw(password, gensalt())
 
 # Creates an admin account in the database
 def db_create_account(email, password):
