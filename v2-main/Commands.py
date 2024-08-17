@@ -7,3 +7,4 @@ class Commands(Enum):
     LOGIN = 'l'
     PREVIEW = 'p'           # preview platform names of password accounts
     VIEW_ACCOUNT = 'v'      # view account (platform or platform and username provided)
+    ADD_ACCOUNT = 'a'
