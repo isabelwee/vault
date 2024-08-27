@@ -22,9 +22,7 @@ class VaultController:
                 print("See you next time!")
                 sys.exit(0)
             elif cmd == Commands.REGISTER.value:
-                self.user = self.userRegister(self)
-                print(self.user.getEmail())
-                print("Account successfully created. You are now logged in.")
+                self.userRegister(self)
             elif cmd == Commands.LOGIN.value:
                 self.userLogin(self)
             elif cmd == Commands.PREVIEW.value:
@@ -56,19 +54,40 @@ class VaultController:
         self.pbController.createRecord('users', user_data)
 
         # get database id of user
-        items = self.pbController.getUserRecord(username)
-        uId = items['id']
+        userInfo = self.pbController.getUserRecord(username)
+        uId = userInfo['id']
 
         # create user instance to 'log them in'
-        return User(uId, email, hashedPassword, None)
+        self.user = User(uId, email, hashedPassword, None)
+        print("Account successfully created. You are now logged in.")
     
     def userLogin(self):
         if self.user is not None:
             print("Error: Already logged in")
 
         username = input("Enter username: ")
-        userInfo = self.pbController.getRecord('users', username) 
-    
+
+        # extract user info from database 
+        userInfo = self.pbController.getUserRecord(username) 
+        if userInfo is None:
+            print("Error: user does not exist")
+            return
+        
+        # verify password
+        dbPassword = userInfo['hashed_master_password']
+        inputPasswordPlaintext = getpass("Enter master password: ")
+        inputPasswordHashed = self.getHashOf(self, inputPasswordPlaintext)
+
+        if dbPassword != inputPasswordHashed:
+            print("Error: incorrect master password")
+            return
+
+        # get user accounts
+
+        self.user = User(userInfo['id'], None, dbPassword, None)
+        print("Successfully logged in")
+
+
     def addAccount(self):
         if self.user is None:
             print("Error: Please log in or register for a Vault account")

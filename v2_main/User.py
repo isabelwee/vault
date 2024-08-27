@@ -1,7 +1,7 @@
 from getpass import getpass
 from os import getenv
 
-import myAES
+from myAES import myAES
 
 class User:
     def __init__(self, dbId, email, hashedMasterPassword, accounts):
@@ -26,12 +26,15 @@ class User:
 
         # encrypt password
         encryptionKey = getenv('ENCRYPTION_KEY')
-        encryptedPwd = myAES.encrypt(plaintextPassword, encryptionKey)
+        encryptedPwd = myAES.encrypt(plaintextPassword, encryptionKey, encryptionKey)
         print(encryptedPwd)
 
         data = {
             "id": self.dbId,
             "platform_name": platform,
             "username": username,
-            "email": email
+            "email": email,
+            "encrypted_password": encryptedPwd
         }
+
+        print(data)

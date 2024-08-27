@@ -10,16 +10,17 @@ class PocketBaseController:
         response = requests.post(f"{self.baseUrl}/api/collections/{collection}/records", json=data)
         if response.status_code != 200:
             print(f"Failed to create record. Status code: {response.status_code}")
+        return
 
     def getUserRecord(self, username):
         params = { "filter": f"username='{username}'" }
         response = requests.get(f"{self.baseUrl}/api/collections/users/records", params=params)
 
-        try:
-            data = response.json()
-            items = data['items'][0]
-        except requests.JSONDecodeError:
-            data = None
+        data = response.json()
 
-        return items
+        # if username doesn't match any in the database
+        if data['items'] == []:
+            return None
+        else:
+            return data['items'][0]
     
